@@ -8,25 +8,27 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 public class FileService {
-	 private static final String FILE_PATH = "D:\\Test_Files\\test.txt";
-//	private static final String FILE_PATH = "D:\\Test_Files\\200.txt";
+	private static final String FILE_PATH = "D:\\Test_Files\\555M.txt";
 	private static final String OUTPUT_FILE_PATH = "D:\\Test_Files\\final.txt";
-	
+	private static final int POSITION = 0;
 	private boolean bufferedFull;
-	private boolean bufferedFullOutput = false;
+	private boolean outputBufferFull;
 	private int bufferSize;
 	private LinkedList<String> inputQueue;
 	private volatile LinkedList<String> outputQueue;
 	private int threadNum;
-	private int startPosition = 0;
-	private int endPosition = 0;
+	private int threadAmounth;
+	private int startPosition;
+	private int endPosition;
 	protected volatile boolean stopApp = false;
 	protected volatile boolean stopWrite = false;
 	protected volatile boolean stopProcess = false;
 	private RandomAccessFile rw;
+	private int count = 0;
 
 	public FileService(int threadNum, int bufferSize) {
-		this.threadNum=threadNum;
+		this.threadNum = threadNum;
+		this.threadAmounth = threadNum;
 		this.bufferSize = bufferSize;
 
 	}
@@ -36,6 +38,9 @@ public class FileService {
 		outputQueue = new LinkedList<String>(
 				Collections.nCopies(bufferSize, ""));
 		bufferedFull = false;
+		outputBufferFull = false;
+		startPosition = POSITION;
+		endPosition = POSITION;
 		try {
 			rw = new RandomAccessFile(FILE_PATH, "rw");
 		} catch (IOException e) {
@@ -43,35 +48,17 @@ public class FileService {
 		}
 	}
 
-	public int getThreadNum() {
-		return threadNum;
-	}
-
-	public void setThreadNum(int threadNum) {
-		this.threadNum = threadNum;
-	}
-
-	public synchronized void process() {
-		while (!bufferedFull) {
-			try {
-				System.out.println("process wait");
-				wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+	private void processFileElement() {
 		if (inputQueue.isEmpty()) {
 			stopProcess = true;
 		} else {
 			int size = inputQueue.size();
-			int step = size / 4;
+			int step = size / getThreadAmounth();
 			endPosition += step;
 			if (endPosition > size) {
 				startPosition = endPosition - step;
 				endPosition = endPosition - (endPosition - size);
 			}
-			System.out.println("process: " + startPosition + " : "
-					+ endPosition);
 			LinkedList<String> subList = new LinkedList<>(inputQueue.subList(
 					startPosition, endPosition));
 			int index = startPosition;
@@ -82,40 +69,62 @@ public class FileService {
 			}
 			threadNum--;
 			startPosition += step;
-			System.out.println("thread num: " + threadNum);
-			if (threadNum == 0) {
-				startPosition = 0;
-				endPosition = 0;
-				bufferedFull = false;
-				bufferedFullOutput = true;
-				inputQueue.clear();
-				notifyAll();
-				threadNum = 4;
-			}
+			refreshProcessAction();
 		}
 	}
 
-	public synchronized void readFile() {
-		while (bufferedFull) {
+	public int getThreadAmounth() {
+		return threadAmounth;
+	}
+
+	public void setThreadAmounth(int threadAmounth) {
+		this.threadAmounth = threadAmounth;
+	}
+
+	private void refreshProcessAction() {
+		if (threadNum == 0) {
+			startPosition = POSITION;
+			endPosition = POSITION;
+			bufferedFull = false;
+			outputBufferFull = true;
+			inputQueue.clear();
+			threadNum = getThreadAmounth();
+			notifyAll();
+		}
+	}
+
+	private void checkWaiting(boolean flag) {
+		while (flag) {
 			try {
-				System.out.println("read wait");
 				wait();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-		try {
-			String currentLine;
-			int lineCounter = 0;
-			while ((currentLine = rw.readLine()) != null) {
-				if (lineCounter == bufferSize) {
-					break;
-				}
-				lineCounter++;
-				inputQueue.add(currentLine);
+	}
+
+	public synchronized void process() {
+		// checkWaiting(!bufferedFull);
+		while (!bufferedFull) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-		} catch (IOException e) {
 		}
+		processFileElement();
+	}
+
+	public synchronized void readFile() {
+		// checkWaiting(bufferedFull);
+		while (bufferedFull) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		readInputFile();
 		if (inputQueue.isEmpty()) {
 			stopApp = true;
 			try {
@@ -129,14 +138,45 @@ public class FileService {
 	}
 
 	public synchronized void writeFile() {
-		while (!bufferedFullOutput) {
-			System.out.println("write wait");
+		// checkWaiting(!outputBufferFull);
+		while (!outputBufferFull) {
 			try {
 				wait();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
+		writeOutputFile();
+
+		if (stopApp) {
+			stopWrite = true;
+		} else {
+			outputQueue.clear();
+			outputQueue = new LinkedList<String>(Collections.nCopies(
+					bufferSize, ""));
+			outputBufferFull = false;
+			notifyAll();
+		}
+	}
+
+	private void readInputFile() {
+		try {
+			count++;
+			String currentLine;
+			int lineCounter = 0;
+			while ((currentLine = rw.readLine()) != null) {
+				if (lineCounter == (bufferSize - 1)) {
+					inputQueue.add(currentLine);
+					break;
+				}
+				lineCounter++;
+				inputQueue.add(currentLine);
+			}
+		} catch (IOException e) {
+		}
+	}
+
+	private void writeOutputFile() {
 		File outputFile = new File(OUTPUT_FILE_PATH);
 		try (FileWriter fileWriter = new FileWriter(outputFile, true)) {
 			while (!outputQueue.isEmpty()) {
@@ -144,14 +184,6 @@ public class FileService {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		if (stopApp) {
-			stopWrite = true;
-		} else {
-			outputQueue.clear();
-			outputQueue = new LinkedList<String>(Collections.nCopies(bufferSize, ""));
-			bufferedFullOutput = false;
-			notifyAll();
 		}
 	}
 }

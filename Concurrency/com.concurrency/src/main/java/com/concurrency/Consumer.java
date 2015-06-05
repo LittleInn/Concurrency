@@ -10,10 +10,8 @@ public class Consumer implements Runnable {
 	@Override
 	public void run() {
 		while (!fileService.stopWrite) {
-
 			fileService.writeFile();
-			System.out
-					.println("----------------------------------------Consumer DONE !!!");
+			System.out.println("DONE");
 		}
 	}
 
