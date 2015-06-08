@@ -8,23 +8,22 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 public class FileService {
-	private static final String FILE_PATH = "D:\\Test_Files\\555M.txt";
-	private static final String OUTPUT_FILE_PATH = "D:\\Test_Files\\final.txt";
+	private static final String FILE_PATH = "D:\\Test_Files\\test.txt";
+	private static final String OUTPUT_FILE_PATH = "D:\\Test_Files\\short.txt";
 	private static final int POSITION = 0;
 	private boolean bufferedFull;
 	private boolean outputBufferFull;
 	private int bufferSize;
 	private LinkedList<String> inputQueue;
-	private volatile LinkedList<String> outputQueue;
+	private LinkedList<String> outputQueue;
 	private int threadNum;
 	private int threadAmounth;
 	private int startPosition;
 	private int endPosition;
-	protected volatile boolean stopApp = false;
-	protected volatile boolean stopWrite = false;
-	protected volatile boolean stopProcess = false;
+	protected boolean stopApp = false;
+	protected boolean stopWrite = false;
+	protected boolean stopProcess = false;
 	private RandomAccessFile rw;
-	private int count = 0;
 
 	public FileService(int threadNum, int bufferSize) {
 		this.threadNum = threadNum;
@@ -52,25 +51,31 @@ public class FileService {
 		if (inputQueue.isEmpty()) {
 			stopProcess = true;
 		} else {
-			int size = inputQueue.size();
-			int step = size / getThreadAmounth();
-			endPosition += step;
-			if (endPosition > size) {
-				startPosition = endPosition - step;
-				endPosition = endPosition - (endPosition - size);
-			}
-			LinkedList<String> subList = new LinkedList<>(inputQueue.subList(
-					startPosition, endPosition));
-			int index = startPosition;
-			while (!subList.isEmpty()) {
-				String line = subList.poll();
-				String newLine = line.toUpperCase() + "\n";
-				outputQueue.set(index++, newLine);
-			}
-			threadNum--;
-			startPosition += step;
+			processSubList();
 			refreshProcessAction();
 		}
+	}
+
+	private void processSubList() {
+		int size = inputQueue.size();
+		int step = size / getThreadAmounth();
+		int over = size % getThreadAmounth();
+		endPosition += step;
+		endPosition = (threadNum == 1) ? (endPosition + over) : endPosition;
+		if (endPosition > size) {
+			startPosition = endPosition - step;
+			endPosition = endPosition - (endPosition - size);
+		}
+		LinkedList<String> subList = new LinkedList<>(inputQueue.subList(
+				startPosition, endPosition));
+		int index = startPosition;
+		while (!subList.isEmpty()) {
+			String line = subList.poll();
+			String newLine = line.toUpperCase() + "\n";
+			outputQueue.set(index++, newLine);
+		}
+		threadNum--;
+		startPosition += step;
 	}
 
 	public int getThreadAmounth() {
@@ -93,18 +98,7 @@ public class FileService {
 		}
 	}
 
-	private void checkWaiting(boolean flag) {
-		while (flag) {
-			try {
-				wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 	public synchronized void process() {
-		// checkWaiting(!bufferedFull);
 		while (!bufferedFull) {
 			try {
 				wait();
@@ -116,7 +110,6 @@ public class FileService {
 	}
 
 	public synchronized void readFile() {
-		// checkWaiting(bufferedFull);
 		while (bufferedFull) {
 			try {
 				wait();
@@ -138,7 +131,6 @@ public class FileService {
 	}
 
 	public synchronized void writeFile() {
-		// checkWaiting(!outputBufferFull);
 		while (!outputBufferFull) {
 			try {
 				wait();
@@ -161,7 +153,6 @@ public class FileService {
 
 	private void readInputFile() {
 		try {
-			count++;
 			String currentLine;
 			int lineCounter = 0;
 			while ((currentLine = rw.readLine()) != null) {
@@ -173,6 +164,7 @@ public class FileService {
 				inputQueue.add(currentLine);
 			}
 		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 

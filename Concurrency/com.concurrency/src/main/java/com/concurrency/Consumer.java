@@ -11,7 +11,6 @@ public class Consumer implements Runnable {
 	public void run() {
 		while (!fileService.stopWrite) {
 			fileService.writeFile();
-			System.out.println("DONE");
 		}
 	}
 

@@ -14,6 +14,7 @@ public class Processor implements Runnable {
 	public void run() {
 		while (!fileService.stopProcess) {
 			fileService.process();
+			System.out.println("Processor "+name+ " finished");
 		}
 	}
 
