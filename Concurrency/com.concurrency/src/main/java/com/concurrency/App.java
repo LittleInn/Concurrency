@@ -4,11 +4,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class App {
-	private static final int THREAD_COUNT = 5;
-	private static final int BUFFER_SIZE = 100;
+	private static final int THREAD_COUNT = 10;
+	private static final int BUFFER_SIZE = 1000;
 
 	public static void main(String[] args) {
-		FileService fileService = new FileService(THREAD_COUNT, BUFFER_SIZE);
+		FileService fileService = new FileService(BUFFER_SIZE);
 		fileService.init();
 		ExecutorService service = Executors.newCachedThreadPool();
 		service.execute(new Producer(fileService));
