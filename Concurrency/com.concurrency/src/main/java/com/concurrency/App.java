@@ -16,5 +16,6 @@ public class App {
 			service.execute(new Processor(fileService, "Thread# " + i));
 		}
 		service.execute(new Consumer(fileService));
+		service.shutdown();
 	}
 }
