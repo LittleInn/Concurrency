@@ -6,42 +6,44 @@ import java.io.IOException;
 
 public class Consumer implements Runnable {
 
-	private Coordinator engine;
+	private Coordinator outputCoordinator;
 	private File outputFile;
-	
-	
 
 	public Consumer(Coordinator engine, String fileName) {
 		super();
-		this.engine = engine;
+		this.outputCoordinator = engine;
 		outputFile = new File(fileName);
 	}
 
 	@Override
 	public void run() {
 		boolean stopWrite = false;
-		while (!stopWrite) {
-			synchronized (engine) {
-				while (engine.emptyList) {
-					try {
-						engine.wait();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+		try (FileWriter fileWriter = new FileWriter(outputFile, true)) {
+			while (!stopWrite) {
+				synchronized (outputCoordinator) {
+					while (outputCoordinator.emptyList) {
+						try {
+							outputCoordinator.wait();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
-				}
-				try (FileWriter fileWriter = new FileWriter(outputFile, true)) {
-					if (!engine.tasks.isEmpty()) {
-						fileWriter.write(engine.getTask().getElement() + "\n");
+					if (!outputCoordinator.tasks.isEmpty()) {
+						System.out.println("write: ");
+						fileWriter.write(outputCoordinator.getTask()
+								.getElement() + "\n");
+//						fileWriter.flush();
 					}
-					if(engine.tasks.isEmpty() & engine.isProcessend()){
-						stopWrite=true;
+					if (outputCoordinator.tasks.isEmpty()
+							& outputCoordinator.isProcessEnd()) {
+						stopWrite = true;
 					}
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-
+		System.out.println("consume end " + Thread.currentThread().getName());
 	}
 
 }

@@ -1,6 +1,8 @@
-package com.multithread;
+package com.concurrencynew;
 
-public class Processor implements Runnable {
+import com.multithread.Task;
+
+public class Processor implements Runnable{
 
 	private Coordinator inputCoordinator;
 	private Coordinator outputCoordinator;
@@ -13,25 +15,18 @@ public class Processor implements Runnable {
 
 	public void process() throws InterruptedException {
 		Task task = null;
-		synchronized (inputCoordinator) {
-			if (!inputCoordinator.tasks.isEmpty()) {
+			if (!inputCoordinator.getTasks().isEmpty()) {
 				task = inputCoordinator.getTask();
 				addProcessedElement(processElement(task.getElement()));
-//				System.out.println("size: "+inputCoordinator.tasks.size());
 			}
-		}
 	}
 
 	public String processElement(String element) {
 		return element.toUpperCase();
 	}
 
-	public void addProcessedElement(String element) {
-		synchronized (outputCoordinator) {
+	public void addProcessedElement(String element) throws InterruptedException {
 			outputCoordinator.addTask(element);
-			outputCoordinator.emptyList = false;
-			outputCoordinator.notify();
-		}
 	}
 
 	@Override
@@ -40,13 +35,13 @@ public class Processor implements Runnable {
 //			System.out.println("process: "+Thread.currentThread().getName());
 			try {
 				process();
-				if(inputCoordinator.isEndOfFile() & inputCoordinator.tasks.isEmpty()){
+				if(inputCoordinator.isEndOfFile() & inputCoordinator.getTasks().isEmpty()){
 					outputCoordinator.setProcessEnd(true);
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("Process end!!!!!!!!!!     "+Thread.currentThread().getName());
 	}
+
 }

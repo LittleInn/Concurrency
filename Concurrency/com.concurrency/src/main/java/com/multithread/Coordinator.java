@@ -19,7 +19,7 @@ public class Coordinator {
 	boolean endOfFile ;
 	boolean processEnd;
 
-	public boolean isProcessend() {
+	public boolean isProcessEnd() {
 		return processEnd;
 	}
 
