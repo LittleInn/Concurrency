@@ -1,12 +1,16 @@
 package com.multithread;
 
+import java.util.Date;
+
+import com.general.Monitor;
+
 public class Runner {
-	private final static String OUTPUT_FILE_NAME = "D:\\Test_Files\\test1.txt";
-	private final static String INPUT_FILE_NAME = "D:\\Test_Files\\test.txt";
-	private final static int THREAD_COUNT = 1;
+	private final static String INPUT_FILE_NAME = "D:\\Test_Files\\finall.txt";
+	private final static String OUTPUT_FILE_NAME = "D:\\Test_Files\\test.txt";
+	private final static int THREAD_COUNT = 10;
 
 	public static void main(String[] args) {
-
+		System.out.println("START: " + new Date().getTime());
 		Coordinator inputCoordinator = new Coordinator();
 		Coordinator outputCoordinator = new Coordinator();
 
@@ -22,12 +26,9 @@ public class Runner {
 		Thread consumer = new Thread(new Consumer(outputCoordinator,
 				OUTPUT_FILE_NAME));
 		consumer.start();
-		
-		Thread threadMonitor = new Monitor(inputCoordinator);
-		System.out.println("Is daemon: "+threadMonitor.isDaemon());
-		System.out.println(threadMonitor.isAlive());
-//threadMonitor.start();
-System.out.println("alive: "+threadMonitor.isAlive());
+
+		Thread threadMonitor = new Monitor(outputCoordinator);
+		threadMonitor.start();
 	}
 
 }

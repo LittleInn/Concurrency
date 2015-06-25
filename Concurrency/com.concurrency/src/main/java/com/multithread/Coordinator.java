@@ -4,35 +4,16 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Coordinator {
+import com.general.GeneralCoordinator;
+import com.general.Task;
+
+public class Coordinator extends GeneralCoordinator {
+
+	private List<Task> tasks;
 
 	public Coordinator() {
 		super();
 		tasks = new LinkedList<Task>();
-		emptyList = true;
-		endOfFile = false;
-		processEnd = false;
-	}
-
-	List<Task> tasks;
-	boolean emptyList;
-	boolean endOfFile ;
-	boolean processEnd;
-
-	public boolean isProcessEnd() {
-		return processEnd;
-	}
-
-	public void setProcessEnd(boolean processEnd) {
-		this.processEnd = processEnd;
-	}
-
-	public boolean isEndOfFile() {
-		return endOfFile;
-	}
-
-	public void setEndOfFile(boolean endOfFile) {
-		this.endOfFile = endOfFile;
 	}
 
 	public Task getTask() {
@@ -47,7 +28,16 @@ public class Coordinator {
 
 	public void addTask(String element) {
 		tasks.add(new Task(element));
-		emptyList = false;
+		setEmptyList(false);
+		// emptyList = false;
+	}
+
+	public List<Task> getTasks() {
+		return tasks;
+	}
+
+	public void setTasks(List<Task> tasks) {
+		this.tasks = tasks;
 	}
 
 }

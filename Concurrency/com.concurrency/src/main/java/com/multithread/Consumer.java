@@ -9,41 +9,37 @@ public class Consumer implements Runnable {
 	private Coordinator outputCoordinator;
 	private File outputFile;
 
-	public Consumer(Coordinator engine, String fileName) {
+	public Consumer(Coordinator outputCoordinator, String fileName) {
 		super();
-		this.outputCoordinator = engine;
+		this.outputCoordinator = outputCoordinator;
 		outputFile = new File(fileName);
 	}
 
 	@Override
 	public void run() {
-		boolean stopWrite = false;
 		try (FileWriter fileWriter = new FileWriter(outputFile, true)) {
-			while (!stopWrite) {
+			while (!outputCoordinator.isStopApp()) {
 				synchronized (outputCoordinator) {
-					while (outputCoordinator.emptyList) {
+					while (outputCoordinator.isEmptyList()) {
 						try {
 							outputCoordinator.wait();
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
 					}
-					if (!outputCoordinator.tasks.isEmpty()) {
-						System.out.println("write: ");
+					if (!outputCoordinator.getTasks().isEmpty()) {
 						fileWriter.write(outputCoordinator.getTask()
 								.getElement() + "\n");
-//						fileWriter.flush();
 					}
-					if (outputCoordinator.tasks.isEmpty()
+					if (outputCoordinator.getTasks().isEmpty()
 							& outputCoordinator.isProcessEnd()) {
-						stopWrite = true;
+						outputCoordinator.setStopApp(true);
 					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("consume end " + Thread.currentThread().getName());
 	}
 
 }

@@ -1,4 +1,4 @@
-package com.multithread;
+package com.general;
 
 public class Task {
 	private String element;

@@ -1,35 +1,40 @@
 package com.multithread;
 
+import java.util.Date;
+
+import com.general.Task;
+
 public class Processor implements Runnable {
 
 	private Coordinator inputCoordinator;
 	private Coordinator outputCoordinator;
 
-	public Processor(Coordinator engine, Coordinator outputEngine) {
+	public Processor(Coordinator inputCoordinator, Coordinator outputCoordinator) {
 		super();
-		this.inputCoordinator = engine;
-		this.outputCoordinator = outputEngine;
+		this.inputCoordinator = inputCoordinator;
+		this.outputCoordinator = outputCoordinator;
+		outputCoordinator.setStartTime(new Date().getTime());
 	}
 
 	public void process() throws InterruptedException {
 		Task task = null;
 		synchronized (inputCoordinator) {
-			if (!inputCoordinator.tasks.isEmpty()) {
+			if (!inputCoordinator.getTasks().isEmpty()) {
 				task = inputCoordinator.getTask();
 				addProcessedElement(processElement(task.getElement()));
-//				System.out.println("size: "+inputCoordinator.tasks.size());
 			}
 		}
 	}
 
 	public String processElement(String element) {
-		return element.toUpperCase();
+		return new StringBuilder(element).reverse().toString();
 	}
 
 	public void addProcessedElement(String element) {
 		synchronized (outputCoordinator) {
 			outputCoordinator.addTask(element);
-			outputCoordinator.emptyList = false;
+			outputCoordinator.setEmptyList(false);
+			// outputCoordinator.emptyList = false;
 			outputCoordinator.notify();
 		}
 	}
@@ -37,16 +42,15 @@ public class Processor implements Runnable {
 	@Override
 	public void run() {
 		while (!outputCoordinator.isProcessEnd()) {
-//			System.out.println("process: "+Thread.currentThread().getName());
 			try {
 				process();
-				if(inputCoordinator.isEndOfFile() & inputCoordinator.tasks.isEmpty()){
+				if (inputCoordinator.isEndOfFile()
+						& inputCoordinator.getTasks().isEmpty()) {
 					outputCoordinator.setProcessEnd(true);
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("Process end!!!!!!!!!!     "+Thread.currentThread().getName());
 	}
 }

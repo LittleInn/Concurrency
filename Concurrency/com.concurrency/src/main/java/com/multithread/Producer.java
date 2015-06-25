@@ -15,9 +15,7 @@ public class Producer implements Runnable {
 
 	@Override
 	public void run() {
-		System.out.println("read run");
 		readFile();
-		System.out.println("Read end!!!");
 	}
 
 	private void readFile() {
@@ -30,7 +28,7 @@ public class Producer implements Runnable {
 						if (currentLine != null) {
 							coordinator.addTask(currentLine);
 							coordinator.notify();
-						}else{
+						} else {
 							coordinator.setEndOfFile(true);
 						}
 					} catch (IOException e) {

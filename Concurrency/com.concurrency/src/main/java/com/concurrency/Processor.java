@@ -1,33 +1,44 @@
 package com.concurrency;
 
-import java.util.Date;
-import java.util.concurrent.Semaphore;
+import com.general.Task;
 
+public class Processor implements Runnable{
 
-public class Processor implements Runnable {
-	private FileService fileService;
-	
-	private String name;
-//	private String element;
+	private Coordinator coordinator;
 
-	public Processor(FileService fileService, String name) {
-		this.fileService = fileService;
-		this.name = name;
+	public Processor(Coordinator coordinator) {
+		super();
+		this.coordinator = coordinator;
+	}
+
+	public void process() throws InterruptedException {
+		Task task = null;
+			if (!coordinator.getTasksForProcess().isEmpty()) {
+				task = coordinator.getTask(coordinator.getTasksForProcess());
+				addProcessedElement(processElement(task.getElement()));
+			}
+	}
+
+	public String processElement(String element) {
+		return new StringBuilder(element).reverse().toString();
+	}
+
+	public void addProcessedElement(String element) throws InterruptedException {
+			coordinator.addTask(coordinator.getTasksProcessed(), element);
 	}
 
 	@Override
 	public void run() {
-		long start = new Date().getTime();
-		while (!fileService.stopProcess) {
-			String element = fileService.process();
-			if(element != null){
-				
-				String reverseProcess = fileService.reverseProcess(element);
-				fileService.writeProcess(reverseProcess);
+		while (!coordinator.isProcessEnd()) {
+			try {
+				process();
+				if(coordinator.isEndOfFile() & coordinator.getTasksForProcess().isEmpty()){
+					coordinator.setProcessEnd(true);
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-			System.out.println("Process "+name);
 		}
-		System.out.println("Processor "+name+ " finished at time: "+(new Date().getTime()-start));
 	}
 
 }
