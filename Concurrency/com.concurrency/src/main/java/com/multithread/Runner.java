@@ -1,34 +1,33 @@
 package com.multithread;
 
-import java.util.Date;
-
-import com.general.Monitor;
+import com.general.AppManagment;
 
 public class Runner {
-	private final static String INPUT_FILE_NAME = "D:\\Test_Files\\finall.txt";
-	private final static String OUTPUT_FILE_NAME = "D:\\Test_Files\\test.txt";
-	private final static int THREAD_COUNT = 10;
+	
+	private static void runApp() {
 
-	public static void main(String[] args) {
-		System.out.println("START: " + new Date().getTime());
 		Coordinator inputCoordinator = new Coordinator();
 		Coordinator outputCoordinator = new Coordinator();
 
+		Thread threadMonitor = new Monitor(inputCoordinator, outputCoordinator);
+		threadMonitor.start();
+
 		Thread producer = new Thread(new Producer(inputCoordinator,
-				INPUT_FILE_NAME));
+				AppManagment.getInputFile()));
 		producer.start();
 
-		for (int i = 0; i < THREAD_COUNT; i++) {
+		for (int i = 0; i < AppManagment.getThreadCount(); i++) {
 			new Thread(new Processor(inputCoordinator, outputCoordinator))
 					.start();
 		}
 
 		Thread consumer = new Thread(new Consumer(outputCoordinator,
-				OUTPUT_FILE_NAME));
+				AppManagment.getOutputFile()));
 		consumer.start();
+	}
 
-		Thread threadMonitor = new Monitor(outputCoordinator);
-		threadMonitor.start();
+	public static void main(String[] args) {
+		Runner.runApp();
 	}
 
 }

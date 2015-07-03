@@ -6,7 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import com.general.GeneralCoordinator;
 import com.general.Task;
 
-public class Coordinator extends GeneralCoordinator{
+public class Coordinator extends GeneralCoordinator {
 
 	private BlockingQueue<Task> tasksForProcess;
 	private BlockingQueue<Task> tasksProcessed;

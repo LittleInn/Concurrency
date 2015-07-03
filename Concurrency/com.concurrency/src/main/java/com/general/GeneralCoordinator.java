@@ -1,14 +1,16 @@
 package com.general;
 
-
 public abstract class GeneralCoordinator {
 	private boolean emptyList;
 	private boolean endOfFile;
 	private boolean processEnd;
 	private boolean stopApp;
 	private long startTime;
+	private long readLinesCount;
+	private long processedLinesCount;
+	private long writtenLinesCount;
 
-	public  GeneralCoordinator() {
+	public GeneralCoordinator() {
 		super();
 		emptyList = true;
 		endOfFile = false;
@@ -55,5 +57,29 @@ public abstract class GeneralCoordinator {
 	public void setStartTime(long startTime) {
 		this.startTime = startTime;
 	}
-	
+
+	public long getReadLinesCount() {
+		return readLinesCount;
+	}
+
+	public void setReadLinesCount(long readLinesCount) {
+		this.readLinesCount = readLinesCount;
+	}
+
+	public long getProcessedLinesCount() {
+		return processedLinesCount;
+	}
+
+	public void setProcessedLinesCount(long processedLinesCount) {
+		this.processedLinesCount = processedLinesCount;
+	}
+
+	public long getWrittenLinesCount() {
+		return writtenLinesCount;
+	}
+
+	public void setWrittenLinesCount(long writtenLinesCount) {
+		this.writtenLinesCount = writtenLinesCount;
+	}
+
 }

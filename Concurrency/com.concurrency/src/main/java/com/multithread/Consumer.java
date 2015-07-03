@@ -8,6 +8,7 @@ public class Consumer implements Runnable {
 
 	private Coordinator outputCoordinator;
 	private File outputFile;
+	private long writtenLinesCount = 0;
 
 	public Consumer(Coordinator outputCoordinator, String fileName) {
 		super();
@@ -17,29 +18,34 @@ public class Consumer implements Runnable {
 
 	@Override
 	public void run() {
+		writeFile();
+	}
+
+	private void writeFile() {
 		try (FileWriter fileWriter = new FileWriter(outputFile, true)) {
 			while (!outputCoordinator.isStopApp()) {
-				synchronized (outputCoordinator) {
-					while (outputCoordinator.isEmptyList()) {
-						try {
-							outputCoordinator.wait();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					if (!outputCoordinator.getTasks().isEmpty()) {
-						fileWriter.write(outputCoordinator.getTask()
-								.getElement() + "\n");
-					}
-					if (outputCoordinator.getTasks().isEmpty()
-							& outputCoordinator.isProcessEnd()) {
-						outputCoordinator.setStopApp(true);
-					}
-				}
+				consumeInputData(fileWriter);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+	}
+
+	private void consumeInputData(FileWriter fileWriter) throws IOException {
+		if (!outputCoordinator.getTasks().isEmpty()) {
+			writeLine(fileWriter);
+			outputCoordinator.setWrittenLinesCount(writtenLinesCount++);
+		}
+		if (outputCoordinator.getTasks().isEmpty()
+				& outputCoordinator.isProcessEnd()) {
+			outputCoordinator.setStopApp(true);
+		}
+	}
+
+	private void writeLine(FileWriter fileWriter) throws IOException {
+		fileWriter.write(outputCoordinator.getTask().getElement() + "\n");
+
 	}
 
 }

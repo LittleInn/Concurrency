@@ -9,6 +9,8 @@ import com.concurrency.Coordinator;
 public class Producer implements Runnable {
 	private Coordinator coordinator;
 	private String fileName;
+	private String currentLine;
+	private long currentLineCount = 0;
 
 	public Producer(Coordinator coordinator, String fileName) {
 		super();
@@ -27,22 +29,32 @@ public class Producer implements Runnable {
 	}
 
 	private void readFile() throws InterruptedException {
-		String currentLine;
 		try (RandomAccessFile rw = new RandomAccessFile(getFileName(), "r")) {
-			while (!coordinator.isEndOfFile()) {
-					try {
-						currentLine = rw.readLine();
-						if (currentLine != null) {
-							coordinator.addTask(coordinator.getTasksForProcess(), currentLine);
-						} else {
-							coordinator.setEndOfFile(true);
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-			}
+			produceInputData(rw);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void produceInputData(RandomAccessFile rw)
+			throws InterruptedException {
+		while (!coordinator.isEndOfFile()) {
+			try {
+				writeTaskForProcess(rw);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void writeTaskForProcess(RandomAccessFile rw)
+			throws InterruptedException, IOException {
+		currentLine = rw.readLine();
+		if (currentLine != null) {
+			coordinator.addTask(coordinator.getTasksForProcess(), currentLine);
+			coordinator.setReadLinesCount(currentLineCount++);
+		} else {
+			coordinator.setEndOfFile(true);
 		}
 	}
 

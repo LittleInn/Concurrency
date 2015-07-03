@@ -17,19 +17,31 @@ public class Coordinator extends GeneralCoordinator {
 	}
 
 	public Task getTask() {
-		Iterator<Task> iterator = tasks.iterator();
 		Task element = null;
-		if (iterator.hasNext()) {
-			element = iterator.next();
+		synchronized (tasks) {
+			while (isEmptyList()) {
+				try {
+					tasks.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			Iterator<Task> iterator = tasks.iterator();
+			element = null;
+			if (iterator.hasNext()) {
+				element = iterator.next();
+			}
+			tasks.remove(element);
 		}
-		tasks.remove(element);
 		return element;
 	}
 
 	public void addTask(String element) {
-		tasks.add(new Task(element));
-		setEmptyList(false);
-		// emptyList = false;
+		synchronized (tasks) {
+			tasks.add(new Task(element));
+			setEmptyList(false);
+			tasks.notify();
+		}
 	}
 
 	public List<Task> getTasks() {

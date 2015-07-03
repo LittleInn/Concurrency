@@ -1,29 +1,32 @@
 package com.concurrency;
 
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.general.Monitor;
-
+import com.general.AppManagment;
 
 public class RunApp {
-	private static final int THREAD_COUNT = 10;
-	private final static String INPUT_FILE_NAME = "D:\\Test_Files\\test.txt";
-	private final static String OUTPUT_FILE_NAME = "D:\\Test_Files\\555R.txt";
+	private static final int GENERAL_THREAD_COUNT = 2;
 
-	public static void main(String[] args) {
-		System.out.println("START: " + new Date().getTime());
+	private static void runApp() {
 		Coordinator coordinator = new Coordinator();
 
-		ExecutorService service = Executors
-				.newFixedThreadPool(THREAD_COUNT + 3);
-		service.execute(new Producer(coordinator, INPUT_FILE_NAME));
-		for (int i = 0; i < THREAD_COUNT; i++) {
+		Thread threadMonitor = new Monitor(coordinator);
+		threadMonitor.start();
+
+		ExecutorService service = Executors.newFixedThreadPool(AppManagment
+				.getThreadCount() + GENERAL_THREAD_COUNT);
+		service.execute(new Producer(coordinator, AppManagment.getInputFile()));
+
+		for (int i = 0; i < AppManagment.getThreadCount(); i++) {
 			service.execute(new Processor(coordinator));
 		}
-		service.execute(new Consumer(coordinator, OUTPUT_FILE_NAME));
-		service.execute(new Monitor(coordinator));
+		
+		service.execute(new Consumer(coordinator, AppManagment.getOutputFile()));
 		service.shutdown();
+	}
+
+	public static void main(String[] args) {
+		RunApp.runApp();
 	}
 }
